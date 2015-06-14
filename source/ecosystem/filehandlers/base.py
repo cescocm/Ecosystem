@@ -78,12 +78,3 @@ class EnvFileHandler(BaseFileHandler):
         with file(path, 'r') as f:
             data = eval(f.read())
         return [data]
-
-# a = EnvFileHandler()
-# a.name = 'foo'
-# b = EnvFileHandler()
-# b.read = FileHandlerManager.unroot(b.read)
-# fm = FileHandlerManager()
-# fm.register_handler(a)
-# fm.register_handler(b)
-# fm.get_handlers()
