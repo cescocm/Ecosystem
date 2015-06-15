@@ -2,6 +2,11 @@ import os
 from pprint import pformat
 import json
 import logging
+try:
+    os.getuid()
+    IS_POSIX = True
+except:
+    IS_POSIX = False
 
 logger = logging.getLogger(__name__)
 
@@ -39,11 +44,13 @@ class FileHandlerManager(object):
 
     @staticmethod
     def unroot(func):
-        uid = os.getuid()
+        if IS_POSIX:
+            uid = os.getuid()
 
         def wrapper(*args, **kwargs):
-            if os.geteuid() == 0:
-                os.seteuid(default_gid)
+            if IS_POSIX:
+                if os.geteuid() == 0:
+                    os.seteuid(default_gid)
             result = None
             try:
                 result = func(*args, **kwargs)
@@ -57,8 +64,9 @@ class FileHandlerManager(object):
                         traceback.format_exc()
                     )
                 )
-            if os.geteuid() == 0:
-                os.seteuid(uid)
+            if IS_POSIX:
+                if os.geteuid() == 0:
+                    os.seteuid(uid)
             return result
         return wrapper
 
