@@ -5,6 +5,7 @@ import logging
 import filehandlers
 import argparse
 import ecosystem.ext
+import copy
 
 logger = logging.getLogger(__name__)
 
@@ -77,6 +78,28 @@ class Ecosystem(object):
                 return
             extension.execute(args)
 
+class Environment(object):
+    def __init__(self, versions, ecosystem, operative_system=None):
+        self.operative_system = operative_system or platform.system()
+        self.versions = versions
+        self.ecosystem = ecosystem
+        self.requirements = [x.requirements for x in self.versions]
+
+    def resolve(self):
+        versions = sorted(self.versions, key=lambda x: len(x.env_dependencies))
+        current_envs = copy.deepcopy(os.environ)
+        while versions:
+            version = versions.pop(0)
+            for variable in version.variables:
+                curr = {}
+                curr[variable.key] = os.path.expandvars(variable.get_value())
+                os.environ.update(curr)
+        return os.environ
+
+    def requirements_satisfied(self):
+        return all(
+            [x.name in self.requirements for x  in self.ecosystem.get_tools()]
+        )
 
 class Tool(object):
     def __init__(self, name, versions=None):
@@ -96,6 +119,8 @@ class Version(object):
         self._environment = data.get('environment', {})
         self.variables = []
         self.digest_variables(self._environment)
+
+        self.env_dependencies = [x.dependencies for x in self.variables]
 
         self._valid = False
         if all([self.tool, self.version, self.variables]):
@@ -131,6 +156,10 @@ class Variable(object):
         self.dependencies = []
         self.digest_data(value)
         self.get_dependencies()
+
+    def get_value(self, operative_system=None):
+        return self.values[operative_system or platform.system().lower()]
+
 
     def digest_data(self, value):
         if isinstance(value, basestring):
