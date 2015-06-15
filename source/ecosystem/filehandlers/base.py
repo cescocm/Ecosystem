@@ -1,6 +1,7 @@
 import os
-import logging
 from pprint import pformat
+import json
+import logging
 
 logger = logging.getLogger(__name__)
 
@@ -77,4 +78,14 @@ class EnvFileHandler(BaseFileHandler):
     def read(self, path):
         with file(path, 'r') as f:
             data = eval(f.read())
+        return [data]
+
+
+class JsonFileHandler(BaseFileHandler):
+    extensions = ['.json']
+    name = 'json_filehandler'
+
+    def read(self, path):
+        with file(path, 'r') as f:
+            data = json.load(f)
         return [data]

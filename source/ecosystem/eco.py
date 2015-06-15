@@ -3,6 +3,8 @@ import os
 import re
 import logging
 import filehandlers
+import argparse
+import ecosystem.ext
 
 logger = logging.getLogger(__name__)
 
@@ -12,6 +14,12 @@ class Ecosystem(object):
         self.operative_system = operative_system or platform.system()
         self.filehandler_manager = filehandlers.base.FileHandlerManager()
         self.register_handler(filehandlers.base.EnvFileHandler())
+        self.register_handler(filehandlers.base.JsonFileHandler())
+
+        self.arg_parser = argparse.ArgumentParser(prog='Ecosystem')
+        self.extensions = {}
+
+        self.discover_extensions()
 
     def scan_envs(self):
         all_files = []
@@ -47,6 +55,27 @@ class Ecosystem(object):
             tools[tool].versions.append(version)
 
         return tools.values()
+
+    def discover_extensions(self):
+        import ecosystem.ext.list
+        ecosystem.ext.register_extension(ecosystem.ext.list, self)
+
+        extensions = ecosystem.ext.discover()
+        for extension in extensions:
+            module = ecosystem.ext.import_module(extension)
+            ecosystem.ext.register_extension(module, self)
+
+    def register_extension(self, extension):
+        self.extensions[extension.name] = extension
+        extension.initialize(self)
+
+    def execute_args(self, args):
+        command = getattr(args, 'command', None)
+        if command:
+            extension = self.extensions.get(command)
+            if not extension:
+                return
+            extension.execute(args)
 
 
 class Tool(object):
@@ -105,8 +134,7 @@ class Variable(object):
 
     def digest_data(self, value):
         if isinstance(value, basestring):
-            for key, val in self.values.items():
-                self.values[key] = value
+            self.values['common'] = value
 
         elif isinstance(value, dict):
             for key, val in value.items():
@@ -127,12 +155,3 @@ class Variable(object):
                     self.dependencies += [x.strip('${}%') for x in result]
         self.dependencies = list(set(self.dependencies))
         return self.dependencies
-
-a = Ecosystem()
-b = a.scan_envs()
-for tool in a.get_tools():
-    print tool.name
-    for version in tool.versions:
-        print '\t%s' % version.version
-        for variable in version.variables:
-            print '\t\t', variable.key, variable.values
