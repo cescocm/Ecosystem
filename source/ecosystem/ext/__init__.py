@@ -40,6 +40,7 @@ def register_extension(module, ecosystem):
 
 class EcosystemPlugin(object):
     name = None
+    requirements = []
 
     @abc.abstractmethod
     def initialize(self, ecosystem):

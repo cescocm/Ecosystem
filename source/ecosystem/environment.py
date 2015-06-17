@@ -1,5 +1,12 @@
 import re
 import os
+import copy
+import platform
+
+
+class Environment(object):
+    def __init__(self, versions=None):
+        self.versions = versions or []
 
 
 class Tool(object):
@@ -52,9 +59,19 @@ class Variable(object):
             'common': ''
         }
 
-        self.dependencies = []
         self.digest_data(value)
+        self.dependencies = []
+        self.strict = False
+        self.absolute = []
         self.get_dependencies()
+
+    def get_value(self, operative_system=None):
+        if operative_system and self.values.get(operative_system):
+            return self.values.get(operative_system)
+        return self.values['common']
+
+    def set_value(self, value, operative_system=None):
+        self.values[operative_system or 'common'] = value
 
     def digest_data(self, value):
         if isinstance(value, basestring):
@@ -62,20 +79,27 @@ class Variable(object):
 
         elif isinstance(value, dict):
             for key, val in value.items():
+                if key == 'strict':
+                    self.strict = value.pop(key)
+                elif key == 'abs':
+                    self.absolute = value.pop(key)
                 if isinstance(val, (list, set)):
                     value[key] = os.path.join(*val)
             self.values.update(value)
 
-    def has_dependencies(self):
+    def has_dependencies(self, refresh=False):
+        if refresh:
+            self.get_dependencies()
+
         return bool(self.dependencies)
 
-    def get_dependencies(self):
-        for key, val in self.values.items():
-            for regex in self.dependency_regexes:
-                if not isinstance(val, basestring):
-                    continue
-                result = regex.findall(val)
-                if result:
-                    self.dependencies += [x.strip('${}%') for x in result]
+    def get_dependencies(self, operative_system=None):
+        val = self.get_value(operative_system)
+        for regex in self.dependency_regexes:
+            if not isinstance(val, basestring):
+                continue
+            result = regex.findall(val)
+            if result:
+                self.dependencies += [x.strip('${}%') for x in result]
         self.dependencies = list(set(self.dependencies))
         return self.dependencies
