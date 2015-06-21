@@ -8,6 +8,11 @@ class Environment(object):
     def __init__(self, versions=None):
         self.versions = versions or []
 
+    def resolve(self):
+        _environ = copy.deepcopy(os.environ)
+        for version in self.versions:
+            version.resolve()
+
 
 class Tool(object):
     def __init__(self, name, versions=None):
@@ -42,6 +47,26 @@ class Version(object):
         for key, val in environment.items():
             self.variables.append(Variable(key, val))
 
+    def resolve(self):
+        variables = [x.key for x in self.variables]
+        _variables = copy.deepcopy(self.variables)
+        resolved = []
+        while _variables:
+            variable = _variables.pop(0)
+            unresolved = any(
+                [x in variables for x in variable.get_dependencies()]
+            )
+            unresolvable = any(
+                [os.environ.get(x) for x in variable.get_dependencies()]
+            )
+            if unresolved and not unresolvable:
+                _variables.append(variable)
+                continue
+            variable.value = os.path.expandvars(variable.value)
+            os.environ[variable.key] = variable.value
+            resolved.append(variable)
+        self.variables = resolved
+
 
 class Variable(object):
     dependency_regexes = [
@@ -52,12 +77,7 @@ class Variable(object):
 
     def __init__(self, key, value):
         self.key = key
-        self.values = {
-            'windows': '',
-            'linux': '',
-            'darwin': '',
-            'common': ''
-        }
+        self.value = ''
 
         self.digest_data(value)
         self.dependencies = []
@@ -65,27 +85,24 @@ class Variable(object):
         self.absolute = []
         self.get_dependencies()
 
-    def get_value(self, operative_system=None):
-        if operative_system and self.values.get(operative_system):
-            return self.values.get(operative_system)
-        return self.values['common']
-
-    def set_value(self, value, operative_system=None):
-        self.values[operative_system or 'common'] = value
+    def __repr__(self):
+        return '<Variable Key: %s, Value: %s>' % (self.key, self.value)
 
     def digest_data(self, value):
         if isinstance(value, basestring):
-            self.values['common'] = value
+            self.value = value
 
         elif isinstance(value, dict):
             for key, val in value.items():
-                if key == 'strict':
+                if key == platform.system().lower():
+                    self.value = val
+                elif key == 'strict':
                     self.strict = value.pop(key)
                 elif key == 'abs':
                     self.absolute = value.pop(key)
                 if isinstance(val, (list, set)):
                     value[key] = os.path.join(*val)
-            self.values.update(value)
+            # self.value = value.get(platform.system(), '')
 
     def has_dependencies(self, refresh=False):
         if refresh:
@@ -93,12 +110,11 @@ class Variable(object):
 
         return bool(self.dependencies)
 
-    def get_dependencies(self, operative_system=None):
-        val = self.get_value(operative_system)
+    def get_dependencies(self):
         for regex in self.dependency_regexes:
-            if not isinstance(val, basestring):
+            if not isinstance(self.value, basestring):
                 continue
-            result = regex.findall(val)
+            result = regex.findall(self.value)
             if result:
                 self.dependencies += [x.strip('${}%') for x in result]
         self.dependencies = list(set(self.dependencies))

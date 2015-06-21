@@ -17,6 +17,7 @@ class Ecosystem(object):
         self.register_handler(filehandlers.JsonFileHandler())
 
         self.arg_parser = argparse.ArgumentParser(prog='Ecosystem')
+        self.subparser = self.arg_parser.add_subparsers(dest='command')
         self.extensions = {}
 
         self.discover_extensions()
@@ -58,7 +59,9 @@ class Ecosystem(object):
 
     def discover_extensions(self):
         import ecosystem.ext.list
+        import ecosystem.ext.run
         ecosystem.ext.register_extension(ecosystem.ext.list, self)
+        ecosystem.ext.register_extension(ecosystem.ext.run, self)
 
         extensions = ext.discover()
         for extension in extensions:

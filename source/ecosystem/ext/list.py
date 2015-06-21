@@ -7,8 +7,8 @@ class ListExtension(EcosystemPlugin):
     def initialize(self, ecosystem):
         self.ecosystem = ecosystem
 
-        subparsers = ecosystem.arg_parser.add_subparsers(dest='command')
-        list_parser = subparsers.add_parser('list')
+        list_parser = ecosystem.subparser.add_parser(self.name)
+
         list_parser.add_argument('-v', '--versions', action='store_true')
         list_parser.add_argument('-t', '--tools', action='store_true')
         list_parser.add_argument('-a', '--all', action='store_true')
