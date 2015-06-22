@@ -60,8 +60,10 @@ class Ecosystem(object):
     def discover_extensions(self):
         import ecosystem.ext.list
         import ecosystem.ext.run
+        import ecosystem.ext.build
         ecosystem.ext.register_extension(ecosystem.ext.list, self)
         ecosystem.ext.register_extension(ecosystem.ext.run, self)
+        ecosystem.ext.register_extension(ecosystem.ext.build, self)
 
         extensions = ext.discover()
         for extension in extensions:

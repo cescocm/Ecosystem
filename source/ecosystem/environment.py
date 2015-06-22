@@ -41,13 +41,8 @@ class Environment:
 
         missing_dependencies = set(missing_dependencies)
 
-        if len(missing_dependencies) > 0:
-            missing_vars = str()
-            for missing_var in missing_dependencies:
-                if len(missing_vars) > 0:
-                    missing_vars += ', '
-                missing_vars += missing_var
-
+        if missing_dependencies:
+            missing_vars = ', '.join([x for x in missing_dependencies if x])
             msg = (
                 'Unable to resolve all of the required variables (%s is '
                 'missing), please check your list and try again!'

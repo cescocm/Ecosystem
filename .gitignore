@@ -2,3 +2,6 @@
 legacy/*
 docs/build/*
 *.orig
+build/*
+source/Ecosystem.egg-info/*
+*.egg
