@@ -1,5 +1,4 @@
 from . import EcosystemPlugin
-from .. import environment
 import platform
 import subprocess
 import os
@@ -112,17 +111,14 @@ class BuildExtension(EcosystemPlugin):
 
     def initialize(self, ecosystem):
         self.ecosystem = ecosystem
-        list_parser = ecosystem.subparser.add_parser(self.name)
+        self.parser = ecosystem.subparser.add_parser(self.name)
 
-        list_parser.add_argument('-qb', '--quick-build', action='store_true')
-        list_parser.add_argument('-fr', '--force-rebuild', action='store_true')
-        list_parser.add_argument('-d', '--deploy', action='store_true')
-        list_parser.add_argument('-t', '--tools', nargs='*')
+        self.parser.add_argument('-q', '--quick-build', action='store_true')
+        self.parser.add_argument('-f', '--force-rebuild', action='store_true')
+        self.parser.add_argument('-d', '--deploy', action='store_true')
+        self.parser.add_argument('-t', '--tools', nargs='*')
 
     def execute(self, args):
-        versions = self.ecosystem.get_versions()
-        _versions = [x.tool + x.version for x in versions]
-
         if platform.system().lower() == 'windows':
             make_command = ['jom']
             make_target = 'NMake Makefiles'
@@ -130,19 +126,7 @@ class BuildExtension(EcosystemPlugin):
             make_target = 'Unix Makefiles'
             make_command = ['make', '-j', str(self.number_of_processors())]
 
-        if not args.tools:
-            raise RuntimeError('No tools specified')
-        not_in_eco = []
-        for tool in args.tools:
-            if tool not in _versions:
-                not_in_eco.append(tool)
-        if not_in_eco:
-            raise RuntimeError(
-                'Some tools cannot be found: %s' % ', '.join(not_in_eco)
-            )
-        env = environment.Environment(
-            [x for x in versions if x.tool + x.version in args.tools]
-        )
+        env = self.get_environment(args)
         if env.success:
             env.getEnv(os.environ)
             build_type = os.getenv('PG_BUILD_TYPE')
@@ -156,7 +140,7 @@ class BuildExtension(EcosystemPlugin):
 
                 call_process([
                     'cmake',
-                    '-DCMAKE_BUILD_TYPE='+build_type,
+                    '-DCMAKE_BUILD_TYPE=%s' % build_type,
                     '-G',
                     make_target,
                     '..']

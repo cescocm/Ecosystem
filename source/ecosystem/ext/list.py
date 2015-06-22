@@ -7,11 +7,11 @@ class ListExtension(EcosystemPlugin):
     def initialize(self, ecosystem):
         self.ecosystem = ecosystem
 
-        list_parser = ecosystem.subparser.add_parser(self.name)
+        self.parser = ecosystem.subparser.add_parser(self.name)
 
-        list_parser.add_argument('-v', '--versions', action='store_true')
-        list_parser.add_argument('-t', '--tools', action='store_true')
-        list_parser.add_argument('-a', '--all', action='store_true')
+        self.parser.add_argument('-v', '--versions', action='store_true')
+        self.parser.add_argument('-t', '--tools', action='store_true')
+        self.parser.add_argument('-a', '--all', action='store_true')
 
     def execute(self, args):
         if args.versions:
