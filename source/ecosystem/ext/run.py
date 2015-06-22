@@ -1,5 +1,8 @@
 from . import EcosystemPlugin
 from .. import environment
+import platform
+import subprocess
+import os
 
 
 class RunExtension(EcosystemPlugin):
@@ -29,10 +32,16 @@ class RunExtension(EcosystemPlugin):
         env = environment.Environment(
             [x for x in versions if x.tool + x.version in args.tools]
         )
-        env.resolve()
-        for version in env.versions:
-            for variable in version.variables:
-                print variable.key, variable.value
+        if env.success:
+            env.getEnv(os.environ)
+            call_process([args.run])
+
+
+def call_process(arguments):
+    if platform.system().lower() == 'windows':
+        subprocess.call(arguments, shell=True)
+    else:
+        subprocess.call(arguments)
 
 
 def register(ecosystem):

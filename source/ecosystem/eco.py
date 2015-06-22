@@ -42,7 +42,7 @@ class Ecosystem(object):
             data = self.filehandler_manager.read(env_file)
             for version in data:
                 version = environment.Version(version)
-                if version.is_valid():
+                if version.plaformSupported():
                     versions.append(version)
         return versions
 
