@@ -79,5 +79,5 @@ class Ecosystem(object):
         if command:
             extension = self.extensions.get(command)
             if not extension:
-                return
+                raise ValueError('Extension %s not found' % command)
             extension.execute(args)

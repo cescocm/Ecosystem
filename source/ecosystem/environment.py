@@ -47,7 +47,7 @@ class Environment:
                 'Unable to resolve all of the required variables (%s is '
                 'missing), please check your list and try again!'
             )
-            logger.error(msg % missing_vars)
+            print msg % missing_vars
             self.success = False
 
     def getVar(self, var):
