@@ -4,7 +4,7 @@ import os
 
 setup(
     name='Ecosystem',
-    version='0.5.2',
+    version='0.5.3',
     description='Cross-platform environment management system',
     url='https://github.com/PeregrineLabs/Ecosystem',
     author='Peregrine Labs',

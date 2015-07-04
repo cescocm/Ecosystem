@@ -12,11 +12,7 @@ class Environment:
     def __init__(self, versions, environmentDirectory=None, force=False):
         self.versions = versions
         self.variables = {}
-        self.success = True
         self.force = force
-
-        if not self.versions:
-            self.success = False
 
         for tool in self.versions:
             tool.getVars(self)
@@ -47,73 +43,69 @@ class Environment:
                 'Unable to resolve all of the required variables (%s is '
                 'missing), please check your list and try again!'
             )
-            print msg % missing_vars
-            self.success = False
+            raise ValueError(msg % missing_vars)
 
     def getVar(self, var):
-        if self.success:
-            if var.name not in self.defined_variables:
-                for dependency in var.dependencies:
-                    if dependency in self.variables:
-                        self.getVar(self.variables[dependency])
-                var_value = var.getEnv()
-                self.value = '%ssetenv %s %s' % (
-                    self.value,
-                    var.name,
-                    var_value
-                )
-                if os.getenv(var.name):
-                    if not self.force and not var.strict:
-                        if var_value == '':
-                            self.value = self.value + '${' + var.name + '}'
-                        else:
-                            self.value = '%s%s${%s}' % (
-                                self.value,
-                                os.pathsep,
-                                var.name
-                            )
-                self.value = self.value + '\n'
-                self.defined_variables.append(var.name)
+        if var.name not in self.defined_variables:
+            for dependency in var.dependencies:
+                if dependency in self.variables:
+                    self.getVar(self.variables[dependency])
+            var_value = var.getEnv()
+            self.value = '%ssetenv %s %s' % (
+                self.value,
+                var.name,
+                var_value
+            )
+            if os.getenv(var.name):
+                if not self.force and not var.strict:
+                    if var_value == '':
+                        self.value = self.value + '${' + var.name + '}'
+                    else:
+                        self.value = '%s%s${%s}' % (
+                            self.value,
+                            os.pathsep,
+                            var.name
+                        )
+            self.value = self.value + '\n'
+            self.defined_variables.append(var.name)
 
     def getVarEnv(self, var):
-        if self.success:
-            if var.name not in self.defined_variables:
-                for dependency in var.dependencies:
-                    if dependency in self.variables:
-                        self.getVarEnv(self.variables[dependency])
-                var_value = var.getEnv()
-                if var.name in os.environ:
-                    if not self.force and not var.strict:
-                        if var_value == '':
-                            var_value = os.environ[var.name]
-                        else:
-                            var_value = os.pathsep.join(
-                                [var_value, os.environ[var.name]]
-                            )
-                self.defined_variables.append(var.name)
-                os.environ[var.name] = var_value
+        if var.name not in self.defined_variables:
+            for dependency in var.dependencies:
+                if dependency in self.variables:
+                    self.getVarEnv(self.variables[dependency])
+            var_value = var.getEnv()
+            if var.name in os.environ:
+                if not self.force and not var.strict:
+                    if var_value == '':
+                        var_value = os.environ[var.name]
+                    else:
+                        var_value = os.pathsep.join(
+                            [var_value, os.environ[var.name]]
+                        )
+            self.defined_variables.append(var.name)
+            os.environ[var.name] = var_value
 
     def getEnv(self, SetEnvironment=False):
         # Combine all of the variable in all the tools based on a
         # dependency list
-        if self.success:
-            self.defined_variables = []
-            self.value = '#Environment created via Ecosystem\n'
+        self.defined_variables = []
+        self.value = '#Environment created via Ecosystem\n'
 
-            for var_name, variable in self.variables.iteritems():
-                if self.variables[var_name].hasValue():
-                    if not SetEnvironment:
-                        self.getVar(variable)
-                    else:
-                        self.getVarEnv(variable)
+        for var_name, variable in self.variables.iteritems():
+            if self.variables[var_name].hasValue():
+                if not SetEnvironment:
+                    self.getVar(variable)
+                else:
+                    self.getVarEnv(variable)
 
-            if not SetEnvironment:
-                return self.value
+        if not SetEnvironment:
+            return self.value
 
-            for env_name, env_value in os.environ.iteritems():
-                os.environ[env_name] = os.path.expandvars(env_value)
-            for env_name, env_value in os.environ.iteritems():
-                os.environ[env_name] = os.path.expandvars(env_value)
+        for env_name, env_value in os.environ.iteritems():
+            os.environ[env_name] = os.path.expandvars(env_value)
+        for env_name, env_value in os.environ.iteritems():
+            os.environ[env_name] = os.path.expandvars(env_value)
 
 
 class Tool(object):
@@ -130,7 +122,7 @@ class Version:
     def __init__(self, data):
         self.in_dictionary = data
 
-        if (self.in_dictionary):
+        if self.in_dictionary:
             self.tool = self.in_dictionary['tool']
             self.version = self.in_dictionary['version']
             self.platforms = self.in_dictionary['platforms']
@@ -143,13 +135,14 @@ class Version:
             env.variables[name].appendValue(value)
 
         # check for optional parameters
-        if 'optional' in self.in_dictionary:
-            for optional_name, optional_value in self.in_dictionary['optional'].iteritems():
-                if optional_name in env.versions:
-                    for name, value in optional_value.iteritems():
-                        if name not in env.variables:
-                            env.variables[name] = Variable(name)
-                        env.variables[name].appendValue(value)
+        if 'optional' not in self.in_dictionary:
+            return
+        for optional_name, optional_value in self.in_dictionary['optional'].iteritems():
+            if optional_name in env.versions:
+                for name, value in optional_value.iteritems():
+                    if name not in env.variables:
+                        env.variables[name] = Variable(name)
+                    env.variables[name].appendValue(value)
 
     """Check to see if the tool is supported on the current platform"""
     def plaformSupported(self):
@@ -180,7 +173,7 @@ class Variable:
     def appendValue(self, value):
         # Check to see if the value is platform dependent
         platform_value = None
-        if (type(value) == dict):
+        if isinstance(value, dict):
             if ('common' in value):
                 platform_value = value['common']
 
@@ -190,10 +183,10 @@ class Variable:
         else:
             platform_value = value
 
-        if(type(value) == dict):
-            if ('strict' in value):
+        if isinstance(value, dict):
+            if 'strict' in value:
                 self.strict = value['strict']
-            elif ('abs' in value):
+            elif 'abs' in value:
                 if(type(value['abs']) == list):
                     if(platform.system().lower() in value['abs']):
                         self.absolute = True

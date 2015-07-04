@@ -47,8 +47,6 @@ class EcosystemPlugin(object):
         versions = self.ecosystem.get_versions()
         _versions = [x.tool + x.version for x in versions]
         if not getattr(args, 'tools', None):
-            return None
-        if not args.tools:
             raise RuntimeError('No tools specified')
         not_in_eco = []
         for tool in args.tools:
