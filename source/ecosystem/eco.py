@@ -75,9 +75,11 @@ class Ecosystem(object):
         extension.initialize(self)
 
     def execute_args(self, args):
-        command = getattr(args, 'command', None)
-        if command:
-            extension = self.extensions.get(command)
-            if not extension:
-                raise ValueError('Extension %s not found' % command)
-            extension.execute(args)
+        if not args:
+            raise RuntimeError('No arguments specified.')
+        command = args.pop(0)
+
+        extension = self.extensions.get(command)
+        if not extension:
+            raise ValueError('Extension %s not found' % command)
+        extension.execute(args)

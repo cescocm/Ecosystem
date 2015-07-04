@@ -1,4 +1,5 @@
 from . import EcosystemPlugin
+import argparse
 
 
 class ListExtension(EcosystemPlugin):
@@ -7,13 +8,19 @@ class ListExtension(EcosystemPlugin):
     def initialize(self, ecosystem):
         self.ecosystem = ecosystem
 
-        self.parser = ecosystem.subparser.add_parser(self.name)
+        self.parser = argparse.ArgumentParser('eco-%s' % self.name)
 
         self.parser.add_argument('-v', '--versions', action='store_true')
         self.parser.add_argument('-t', '--tools', action='store_true')
         self.parser.add_argument('-a', '--all', action='store_true')
 
     def execute(self, args):
+        args = self.parser.parse_args(args)
+        if not any(vars(args).values()):
+            self.parser.error(
+                'At least one argument required. '
+                'Type --help for a list of all of them.'
+            )
         if args.versions:
             for version in self.ecosystem.get_versions():
                 print version.tool, version.version

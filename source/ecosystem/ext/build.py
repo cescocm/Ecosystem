@@ -3,6 +3,7 @@ import platform
 import subprocess
 import os
 import re
+import argparse
 
 
 class BuildExtension(EcosystemPlugin):
@@ -111,7 +112,7 @@ class BuildExtension(EcosystemPlugin):
 
     def initialize(self, ecosystem):
         self.ecosystem = ecosystem
-        self.parser = ecosystem.subparser.add_parser(self.name)
+        self.parser = argparse.ArgumentParser('eco-%s' % self.name)
 
         self.parser.add_argument('-q', '--quick-build', action='store_true')
         self.parser.add_argument('-f', '--force-rebuild', action='store_true')
@@ -119,6 +120,7 @@ class BuildExtension(EcosystemPlugin):
         self.parser.add_argument('-t', '--tools', nargs='*')
 
     def execute(self, args):
+        args = self.parser.parse_args(args)
         if platform.system().lower() == 'windows':
             make_command = ['jom']
             make_target = 'NMake Makefiles'
@@ -127,28 +129,28 @@ class BuildExtension(EcosystemPlugin):
             make_command = ['make', '-j', str(self.number_of_processors())]
 
         env = self.get_environment(args)
-        if env.success:
-            env.getEnv(os.environ)
-            build_type = os.getenv('PG_BUILD_TYPE')
-            if not args.quick_build:
-                if args.force_rebuild:
-                    try:
-                        open('CMakeCache.txt')
-                        os.remove('CMakeCache.txt')
-                    except IOError:
-                        print 'Cache doesnt exist...'
 
-                call_process([
-                    'cmake',
-                    '-DCMAKE_BUILD_TYPE=%s' % build_type,
-                    '-G',
-                    make_target,
-                    '..']
-                )
+        env.getEnv(os.environ)
+        build_type = os.getenv('PG_BUILD_TYPE')
+        if not args.quick_build:
+            if args.force_rebuild:
+                try:
+                    open('CMakeCache.txt')
+                    os.remove('CMakeCache.txt')
+                except IOError:
+                    print 'Cache doesnt exist...'
 
-            if args.deploy:
-                make_command.append("package")
-            call_process(make_command)
+            call_process([
+                'cmake',
+                '-DCMAKE_BUILD_TYPE=%s' % build_type,
+                '-G',
+                make_target,
+                '..']
+            )
+
+        if args.deploy:
+            make_command.append("package")
+        call_process(make_command)
 
 
 def call_process(arguments):
