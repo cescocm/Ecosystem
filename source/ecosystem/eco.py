@@ -7,6 +7,7 @@ import ext
 import environment
 
 logger = logging.getLogger(__name__)
+__version__ = '0.5.3'
 
 
 class Ecosystem(object):
@@ -78,6 +79,13 @@ class Ecosystem(object):
         if not args:
             raise RuntimeError('No arguments specified.')
         command = args.pop(0)
+        if command in ['--help', '-h']:
+            print 'Available extensions:'
+            print '\t{%s}' % ', '.join(self.extensions.keys())
+            return
+        elif command in ['--version', '-v']:
+            print 'PeregrineLabs Ecosystem %s' % __version__
+            return
 
         extension = self.extensions.get(command)
         if not extension:
