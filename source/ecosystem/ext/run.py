@@ -12,7 +12,7 @@ class RunExtension(EcosystemPlugin):
         self.parser = argparse.ArgumentParser('eco-%s' % self.name)
 
         self.parser.add_argument('-t', '--tools', nargs='+')
-        self.parser.add_argument('-r', '--run')
+        self.parser.add_argument('-r', '--run', type=str)
 
     def execute(self, args):
         args, extra = self.parser.parse_known_args(args)
@@ -20,7 +20,10 @@ class RunExtension(EcosystemPlugin):
 
         env.getEnv(os.environ)
 
-        command = [args.run]
+        if isinstance(args.run, basestring) and ' ' in args.run:
+            command = args.run.split(' ')
+        else:
+            command = [args.run]
         if extra:
             command += extra
         self.call_process(command)
