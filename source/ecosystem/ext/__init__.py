@@ -56,9 +56,12 @@ class EcosystemPlugin(object):
             raise RuntimeError(
                 'Some tools cannot be found: %s' % ', '.join(not_in_eco)
             )
-        env = environment.Environment(
-            [x for x in versions if x.tool + x.version in args.tools]
-        )
+        tools = [None] * len(args.tools)
+        for _v, _vname in zip(versions, _versions):
+            if _vname in args.tools:
+                tools[args.tools.index(_vname)] = _v
+
+        env = environment.Environment(tools)
         return env
 
     @abc.abstractmethod
