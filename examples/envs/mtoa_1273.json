@@ -1,0 +1,25 @@
+{
+    "requires": [
+        "maya"
+    ], 
+    "tool": "mtoa", 
+    "platforms": [
+        "windows", 
+        "linux", 
+        "darwin"
+    ], 
+    "version": "1.2.7.3",
+    "environment": {
+        "DYLD_LIBRARY_PATH": {
+            "darwin": "${MTOA}/bin"
+        }, 
+        "MTOA_VERSION": "%(version)s",
+        "MTOA": "${SOFTWARE_PATH}/maya/mtoa/%(platform)s/${MTOA_VERSION}/${MAYA_VERSION}",
+        "MAYA_RENDER_DESC_PATH": "${MTOA}",
+        "PATH": "${MTOA}/bin", 
+        "ARNOLD_PLUGIN_PATH": "${MTOA}/shaders", 
+        "MAYA_MODULE_PATH": "${MTOA}", 
+        "MTOA_EXTENSIONS_PATH": "${MTOA}/extensions",
+        "MTOA_EXTENSIONS": "${MTOA}/extensions"
+    }
+}
