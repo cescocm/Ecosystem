@@ -36,7 +36,6 @@ class Ecosystem(object):
 
                 ext = os.path.splitext(envfile)[-1]
                 handler = self.filehandler.file_handlers.get(ext)
-                print handler, ext
 
                 if not handler:
                     continue

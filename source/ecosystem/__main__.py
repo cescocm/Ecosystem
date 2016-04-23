@@ -48,4 +48,5 @@ def main(args=sys.argv[1:]):
                 shell='Win' in platform.system()
             )
 
-main()
+if __name__ == '__main__':
+    main()
