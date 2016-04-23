@@ -9,12 +9,18 @@ from ecosystem import Ecosystem, Environment
 import os
 import subprocess
 
+
 eco = Ecosystem()
+env = eco.get_tools('maya2016.5', 'mtoa1.2.7.3', 'alShaders1.0.0rc14')
+
+# OR
+
 maya_tool = eco.get_tool('maya2016.5')
 mtoa_tool = eco.get_tool('mtoa1.2.7.3')
 alshaders_tool = eco.get_tool('alShaders1.0.0rc14')
 
-env = Environment(maya_tool, mtoa_tool, alshaders_tool)
+env = Environment(eco, maya_tool, mtoa_tool, alshaders_tool)
+
 
 # The "clean" way
 print os.getenv('MAYA_LOCATION')  # Nothing specified

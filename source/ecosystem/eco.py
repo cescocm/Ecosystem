@@ -11,14 +11,16 @@ logger = logging.getLogger(__name__)
 
 
 class Ecosystem(object):
-    def __init__(self, search_paths=None, force_platform=None):
-        self.search_paths = search_paths or \
+    def __init__(
+            self, env_search_paths=None, plugin_searach_paths=None,
+            force_platform=None):
+        self.search_paths = env_search_paths or \
             os.getenv('ECO_ENV', '').split(os.pathsep)
 
         self.force_platform = force_platform or platform.system().lower()
 
         self.filehandler = handlers.FileHandlerManager()
-        self.pluginmanager = plugins.PluginManager(self)
+        self.pluginmanager = plugins.PluginManager(self, plugin_searach_paths)
         self._tools = {}
         self.discover()
 
@@ -93,9 +95,19 @@ class Ecosystem(object):
     def list_tools(self):
         return sorted(self._tools.keys())
 
+    def get_environment(self, *tools):
+        _tools = []
+        for tool in tools:
+            _tools.append(self.get_tool(tool))
+        env = Environment(
+            ecosystem=self,
+            *_tools
+        )
+        return env
+
 
 class Environment(object):
-    def __init__(self, *tools):
+    def __init__(self, ecosystem, *tools):
         self.tools = tools
         self.tool_names = [x.tool for x in self.tools]
 

@@ -1,6 +1,6 @@
 import sys
 import argparse
-from ecosystem import Ecosystem, Environment
+from ecosystem import Ecosystem
 import subprocess
 import platform
 import logging
@@ -36,16 +36,12 @@ def main(args=sys.argv[1:]):
         return
 
     if args.run:
-
-        tools = []
-        for tool in args.tools:
-            tools.append(eco.get_tool(tool))
-        env = Environment(*tools)
+        env = eco.get_environment(*args.tools)
 
         with env:
             subprocess.call(
                 args.run + extra,
-                shell='Win' in platform.system()
+                shell='win' in platform.system().lower()
             )
 
 if __name__ == '__main__':
