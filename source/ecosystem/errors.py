@@ -6,5 +6,9 @@ class MissingDependencyError(Exception):
     '''Raised when a variable is unable to meet a dependency.'''
 
 
-class InvalidTool(Exception):
-    '''Raised when attempting to retrieve an invalid/non-existing tool'''
+class ToolNotFoundError(Exception):
+    '''Raised when attempting to retrieve an non-existing tool'''
+
+
+class PresetNotFoundError(Exception):
+    '''Raised when attempting to retrieve an non-existing preset'''

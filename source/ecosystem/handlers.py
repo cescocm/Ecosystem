@@ -32,40 +32,65 @@ class FileHandlerManager(object):
 class BaseFileHandler(object):
     extensions = []
 
-    def read(self, file_path):
+    def read_env(self, file_path):
+        raise NotImplementedError()
+
+    def read_preset(self, file_path):
         raise NotImplementedError()
 
 
 class EnvFileHandler(BaseFileHandler):
     extensions = ['.env']
 
-    def read(self, path):
+    def read_env(self, path):
         with file(path, 'r') as f:
             return [eval(f.read())]
+
+    def read_preset(self, file_path):
+        return self.read_env(file_path)
 
 
 class JsonHandler(BaseFileHandler):
     extensions = ['.json']
 
-    def read(self, file_path):
+    def read_env(self, file_path):
         with open(file_path, 'r') as f:
             return [json.load(f)]
+
+    def read_preset(self, file_path):
+        return self.read_env(file_path)
 
 
 class PythonHandler(BaseFileHandler):
     extensions = ['.py']
 
-    def read(self, file_path):
-        if sys.version_info[0] == 2:
-            module = imp.load_source(
-                os.path.splitext(os.path.split(file_path)[-1])[0],
-                file_path
-            )
-        else:
+    def check_compatibility(self):
+        if not sys.version_info[0] == 2:
             raise NotImplementedError('Python 3 not supported.')
+
+    def read_module(self, file_path):
+        self.check_compatibility()
+
+        module = imp.load_source(
+            os.path.splitext(os.path.split(file_path)[-1])[0],
+            file_path
+        )
+        return module
+
+    def read_env(self, file_path):
+        module = self.read_module(file_path)
 
         if not hasattr(module, 'get_tools'):
             logger.warn('Env file "%s" does not have "get_tools" function')
             return []
 
         return module.get_tools()
+
+    def read_preset(self, file_path):
+        module = self.read_module(file_path)
+
+        if not hasattr(module, 'get_presets'):
+            logger.warn('Env file "%s" does not have "get_tools" function')
+            return []
+
+        return module.get_presets()

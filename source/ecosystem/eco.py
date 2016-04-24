@@ -6,6 +6,7 @@ from ecosystem import errors
 from ecosystem import handlers
 from ecosystem import plugins
 from ecosystem import tool as ecotool
+from ecosystem import presets
 
 logger = logging.getLogger(__name__)
 
@@ -13,7 +14,7 @@ logger = logging.getLogger(__name__)
 class Ecosystem(object):
     def __init__(
             self, env_search_paths=None, plugin_searach_paths=None,
-            force_platform=None):
+            preset_searach_paths=None, force_platform=None):
         self.search_paths = env_search_paths or \
             os.getenv('ECO_ENV', '').split(os.pathsep)
 
@@ -21,6 +22,7 @@ class Ecosystem(object):
 
         self.filehandler = handlers.FileHandlerManager()
         self.pluginmanager = plugins.PluginManager(self, plugin_searach_paths)
+        self.presetmanager = presets.PresetManager(self, preset_searach_paths)
         self._tools = {}
         self.discover()
 
@@ -43,7 +45,7 @@ class Ecosystem(object):
                     continue
 
                 try:
-                    tools = handler.read(envfile_path)
+                    tools = handler.read_env(envfile_path)
                 except Exception as e:
                     logger.warn('Could not read "%s": %s' % (envfile_path, e))
                     logger.debug(traceback.format_exc())
@@ -88,22 +90,26 @@ class Ecosystem(object):
     def get_tool(self, tool):
         _tool = self._tools.get(tool)
         if not _tool:
-            raise errors.InvalidTool('Tool %s does not exist.' % tool)
+            raise errors.ToolNotFoundError('Tool %s does not exist.' % tool)
 
         return _tool
 
     def list_tools(self):
         return sorted(self._tools.keys())
 
+    def list_presets(self):
+        return self.presetmanager.list_presets()
+
     def get_environment(self, *tools):
         _tools = []
         for tool in tools:
             _tools.append(self.get_tool(tool))
-        env = Environment(
-            ecosystem=self,
-            *_tools
-        )
+
+        env = Environment(self, *_tools)
         return env
+
+    def get_preset(self, name):
+        return self.presetmanager.get_preset(name)
 
 
 class Environment(object):
@@ -122,7 +128,7 @@ class Environment(object):
         self._previous_environment = dict()
         self._previous_environment.update(os.environ)
 
-        self.resolve()
+        self.environ = self.resolve()
 
         return self
 
@@ -163,7 +169,7 @@ class Environment(object):
                 prev = os.environ.get(curr_var.key, '')
                 prev = [x for x in prev.split(os.pathsep) if x]
                 prev.append(curr_var.value)
-                os.environ[curr_var.key] = os.pathsep.join(prev)
+                os.environ[str(curr_var.key)] = str(os.pathsep.join(prev))
                 continue
             else:
                 variables.append(curr_var)

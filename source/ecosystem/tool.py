@@ -61,6 +61,7 @@ class Variable(object):
         self._raw_value = value
         if isinstance(value, dict):
             value = value.get(self.tool.platform, '')
+            value = value or self._raw_value.get('*', '')
 
         self.value = self.format_value(value)
 

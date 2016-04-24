@@ -63,3 +63,9 @@ class PluginManager(object):
 
     def register_handler(self, handler):
         self.ecosystem.filehandler.register_handler(handler)
+
+    def register_pre_resolve_hook(self, hook):
+        raise NotImplementedError()
+
+    def register_post_resolve_hook(self, hook):
+        raise NotImplementedError()
