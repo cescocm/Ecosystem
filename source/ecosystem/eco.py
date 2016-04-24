@@ -195,3 +195,7 @@ class Environment(object):
         requirement_list = sorted(requirement_list, key=lambda x: x[1])
         requirement_list = [x[0] for x in requirement_list]
         return requirement_list
+
+    def get_environ(self):
+        with self:
+            return self.environ
