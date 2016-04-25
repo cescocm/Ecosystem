@@ -93,6 +93,13 @@ subprocess.call(
 
 ```
 
-```
+### Command line usage
+
+``` bash
+ecosystem -h
+ecosystem -l
+ecosystem --list-presets
 ecosystem -t maya2016.5 mtoa1.2.7.3 alShaders1.0.0rc14 -r maya
+ecosystem -p maya2016_core -r
+ecosystem -p maya2016_core -r maya
 ``` 
