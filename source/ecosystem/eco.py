@@ -137,20 +137,17 @@ class Environment(object):
         os.environ.update(self._previous_environment)
 
     def resolve(self):
-        sorted_tools = self.sort_by_requirement()
+        self.check_requirements()
 
         variables = []
 
-        for tool in sorted_tools:
+        for tool in self.tools:
             for var in self.sort_by_dependency(tool.envs):
-                if var.requires and var.requires not in self.tool_names:
-                    continue
                 variables.append(var)
 
         var_keys = [x.key for x in variables]
 
-        while variables:
-            curr_var = variables.pop(0)
+        for curr_var in variables:
 
             for dependency in curr_var.get_dependencies():
                 if dependency not in var_keys + os.environ.keys():
@@ -163,16 +160,14 @@ class Environment(object):
                         )
                     )
 
-            curr_var.value = os.path.expandvars(curr_var.value)
+            prev = os.environ.get(curr_var.key, '')
+            prev = [x for x in prev.split(os.pathsep) if x]
+            prev.append(curr_var.value)
+            os.environ[str(curr_var.key)] = str(os.pathsep.join(prev))
 
-            if len(curr_var.get_dependencies()) == 0:
-                prev = os.environ.get(curr_var.key, '')
-                prev = [x for x in prev.split(os.pathsep) if x]
-                prev.append(curr_var.value)
-                os.environ[str(curr_var.key)] = str(os.pathsep.join(prev))
-                continue
-            else:
-                variables.append(curr_var)
+        for i in range(3):
+            for env_name, env_value in os.environ.iteritems():
+                os.environ[env_name] = os.path.expandvars(env_value)
 
         environ = dict()
         environ.update(os.environ)
@@ -181,8 +176,7 @@ class Environment(object):
     def sort_by_dependency(self, variables):
         return sorted(variables, key=lambda x: len(x.dependencies))
 
-    def sort_by_requirement(self):
-        requirement_list = []
+    def check_requirements(self):
         for tool in self.tools:
             for requirement in tool.requires:
                 if requirement not in self.tool_names:
@@ -190,11 +184,6 @@ class Environment(object):
                         'Tool "%s" misses requirement "%s"' % (
                             tool.name, requirement)
                     )
-            requirement_list.append([tool, len(tool.requires)])
-
-        requirement_list = sorted(requirement_list, key=lambda x: x[1])
-        requirement_list = [x[0] for x in requirement_list]
-        return requirement_list
 
     def get_environ(self):
         with self:
