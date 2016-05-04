@@ -80,8 +80,7 @@ preset.run(command=['maya', '--prompt'])
 
 # Further customization
 
-env = preset.get_environment()
-with env:
+with preset.get_environment():
     environ = env.environ
 
 #  ...
