@@ -115,7 +115,7 @@ class Ecosystem(object):
 class Environment(object):
     def __init__(self, ecosystem, *tools):
         self.tools = tools
-        self.tool_names = [x.tool for x in self.tools]
+        self.ecosystem = ecosystem
 
     def __repr__(self):
         return '<%s.%s "%s">' % (
@@ -135,6 +135,32 @@ class Environment(object):
     def __exit__(self, exception_type, exception_val, trace):
         os.environ.clear()
         os.environ.update(self._previous_environment)
+
+    def __add__(self, other):
+        if not isinstance(other, Environment):
+            raise TypeError('Can only be added to other Environment objects.')
+
+        return Environment(self.ecosystem, self.tools + other.tools)
+
+    def __radd__(self, other):
+        if not isinstance(other, Environment):
+            raise TypeError('Can only be added to other Environment objects.')
+
+        self.tools += other.tools
+        return self
+
+    def __sub__(self, other):
+        if not isinstance(other, Environment):
+            raise TypeError('Can only be added to other Environment objects.')
+
+        return Environment(self.ecosystem, self.tools - other.tools)
+
+    def __rsub__(self, other):
+        if not isinstance(other, Environment):
+            raise TypeError('Can only be added to other Environment objects.')
+
+        self.tools -= other.tools
+        return self
 
     def resolve(self):
         self.check_requirements()
@@ -177,9 +203,10 @@ class Environment(object):
         return sorted(variables, key=lambda x: len(x.dependencies))
 
     def check_requirements(self):
+        tool_names = [x.tool for x in self.tools]
         for tool in self.tools:
             for requirement in tool.requires:
-                if requirement not in self.tool_names:
+                if requirement not in tool_names:
                     raise errors.MissingRequirementError(
                         'Tool "%s" misses requirement "%s"' % (
                             tool.name, requirement)

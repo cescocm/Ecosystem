@@ -108,8 +108,11 @@ class Preset(object):
         with environment:
             envs = environment.environ
 
+        for key, val in envs.items():
+            envs[str(key)] = str(val)
+
         if blocking:
-            return subprocess.check_output(
+            return subprocess.call(
                 command,
                 env=envs,
                 shell='win' in platform.system().lower()
