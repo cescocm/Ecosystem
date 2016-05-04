@@ -16,6 +16,9 @@ class FileHandlerManager(object):
 
     def register_handler(self, handler):
         for extension in handler.extensions:
+            if self.file_handlers.get(extension):
+                logger.warn(
+                    'Duplicate handlers for extension "%s"' % extension)
             self.file_handlers[extension] = handler
 
     def read(self, path):
