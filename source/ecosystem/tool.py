@@ -1,4 +1,5 @@
 import re
+import os
 
 
 class Tool(object):
@@ -62,6 +63,9 @@ class Variable(object):
         if isinstance(value, dict):
             value = value.get(self.tool.platform, '')
             value = value or self._raw_value.get('*', '')
+
+        if isinstance(value, (list, tuple, set)):
+            value = os.pathsep.join(value)
 
         self.value = self.format_value(value)
 
