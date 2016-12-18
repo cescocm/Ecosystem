@@ -1,8 +1,9 @@
 import json
 import os
 import logging
-import imp
-import sys
+
+import types
+import six
 
 logger = logging.getLogger(__name__)
 
@@ -67,17 +68,15 @@ class JsonHandler(BaseFileHandler):
 class PythonHandler(BaseFileHandler):
     extensions = ['.py']
 
-    def check_compatibility(self):
-        if not sys.version_info[0] == 2:
-            raise NotImplementedError('Python 3 not supported.')
-
     def read_module(self, file_path):
-        self.check_compatibility()
+        name, ext = os.path.splitext(os.path.split(file_path)[-1])
 
-        module = imp.load_source(
-            os.path.splitext(os.path.split(file_path)[-1])[0],
-            file_path
-        )
+        module = types.ModuleType(name)
+        module.__file__ = file_path
+
+        with open(file_path, 'r') as f:
+            module = six.exec_(f.read(), module.__dict__)
+
         return module
 
     def read_env(self, file_path):
@@ -93,7 +92,7 @@ class PythonHandler(BaseFileHandler):
         module = self.read_module(file_path)
 
         if not hasattr(module, 'get_presets'):
-            logger.warn('Env file "%s" does not have "get_tools" function')
+            logger.warn('Preset file "%s" does not have "get_tools" function')
             return []
 
         return module.get_presets()

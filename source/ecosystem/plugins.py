@@ -1,8 +1,9 @@
 import os
-import imp
 import logging
-import sys
 import traceback
+
+import types
+import six
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +19,7 @@ class PluginManager(object):
     def discover(self):
         if not any(self.search_paths):
             return
+
         for path in self.search_paths:
             if not os.path.isdir(path):
                 logger.warn('Path %s is not a directory. Skipping.' % path)
@@ -33,17 +35,19 @@ class PluginManager(object):
                 if not ext == '.py':
                     continue
 
-                if sys.version_info[0] == 2:
-                    try:
-                        module = imp.load_source(name, plugin_path)
-                    except Exception as e:
-                        logger.warn(
-                            'Could not load plugin "%s": %s' % (plugin_path, e)
-                        )
-                        logger.debug(traceback.format_exc())
-                        continue
-                else:
-                    raise NotImplementedError('Python 3 not supported.')
+                module = types.ModuleType(name)
+                module.__file__ = plugin_path
+
+                try:
+                    with open(plugin_path, 'r') as f:
+                        module = six.exec_(f.read(), module.__dict__)
+
+                except Exception as e:
+                    logger.warn(
+                        'Could not load plugin "%s": %s' % (plugin_path, e)
+                    )
+                    logger.debug(traceback.format_exc())
+                    continue
 
                 if not hasattr(module, 'initialize'):
                     logger.warn(
