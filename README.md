@@ -4,25 +4,101 @@
 
 This is a prototype to determine what features of this code are valid an useful and which are not. It is meant as a compilation of ideas to improve the original [Ecosystem](https://github.com/PeregrineLabs/Ecosystem).
 
-## Getting Started
+### Setup
 
-To install Ecosystem, you can run
+* **ECO_ENV**: Path for environment files.
+* **ECO_PRESET_PATH**: Path for ecosystem presets.
+* **ECO_PLUGIN_PATH**: Path for ecosystem plugins.
 
-    python setup.py install
+### Basic python usage
 
-After this, if python is fully configured (in Windows *C:\Python2x\Scripts* has to be in the PATH environment variable), the ecosystem executable will be available through command line:
-
-    ecosystem --help
-
-As it is right now, it has a similar functionality to the original [Ecosystem](https://github.com/PeregrineLabs/Ecosystem), but a slighly different syntax:
-
-    ecosystem run -t maya2015 yeti1.3.19 -r maya
-    ecosystem list --all
-
-This are the new features:
-
-* **Plugin system** similar to [Flask](http://flask.pocoo.org/), in which any module called "ecosystem_*" will be registered as an ecosytem extension if properly modeled. Some examples of extensions can be found in the [built in extensions](https://github.com/salvaom/Ecosystem/tree/master/source/ecosystem/ext).
-* **Dynamic file handlers**, where you can define custom readers for custom extensions, so it's not limited to any file type. An example of file handlers can be found in the [built in file handlers](https://github.com/salvaom/Ecosystem/blob/master/source/ecosystem/filehandlers.py) file. To implement them, the plugin system should be used.
+```python
+from ecosystem import Ecosystem
+import subprocess
 
 
-The discussion about this repository can be found at [google groups](https://groups.google.com/forum/#!topic/ecosystem-env/5rpPJPdO4bk).
+eco = Ecosystem()
+env = eco.get_environment('maya2016.5', 'mtoa1.2.7.3', 'alShaders1.0.0rc14')
+
+
+# OR
+
+maya_tool = eco.get_tool('maya2016.5')
+mtoa_tool = eco.get_tool('mtoa1.2.7.3')
+alshaders_tool = eco.get_tool('alShaders1.0.0rc14')
+
+env = Environment(eco, maya_tool, mtoa_tool, alshaders_tool)
+
+# The "clean" way
+with env:
+    subprocess.call('maya')
+
+# The "dirty" way
+env.resolve()
+subprocess.call('maya')
+
+```
+
+### Retrieving an environment
+
+```python
+from ecosystem import Ecosystem
+import subprocess
+
+
+eco = Ecosystem()
+env = eco.get_environment('maya2016.5', 'mtoa1.2.7.3', 'alShaders1.0.0rc14')
+
+with env:
+    environ = env.environ
+
+#  ...
+
+subprocess.call(
+    'maya',
+    env=environ
+)
+
+```
+
+### Presets
+
+```python
+from ecosystem import Ecosystem
+import subprocess
+
+
+eco = Ecosystem()
+preset = eco.get_preset('maya2016_core')
+
+# Execute defaults
+preset.run()
+
+# Execute custom command
+preset.run(command=['maya', '--prompt'])
+
+
+# Further customization
+
+with preset.get_environment():
+    environ = env.environ
+
+#  ...
+
+subprocess.call(
+    'maya',
+    env=environ
+)
+
+```
+
+### Command line usage
+
+``` bash
+ecosystem -h
+ecosystem -l
+ecosystem --list-presets
+ecosystem -t maya2016.5 mtoa1.2.7.3 alShaders1.0.0rc14 -r maya
+ecosystem -p maya2016_core -r
+ecosystem -p maya2016_core -r maya
+``` 

@@ -1,4 +1,7 @@
-from eco import Ecosystem, __version__
+from .eco import Ecosystem, Environment
 import logging
 
-logging.getLogger(__name__)
+logging.basicConfig(
+    format='%(levelname)-8s - %(name)-18s:  %(message)s',
+    level=logging.INFO
+)

@@ -1,0 +1,9 @@
+{
+    "name": "maya2016_core",
+    "tools": [
+        "maya2016.5",
+        "mtoa1.2.7.3",
+        "alShaders1.0.0rc14"
+    ],
+    "default_command": "maya"
+}
