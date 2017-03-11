@@ -54,11 +54,19 @@ class Ecosystem(object):
                 for _tool in tools:
                     try:
                         versions = _tool['version']
-                        if isinstance(versions, (str, unicode)):
-                            versions = [versions]
+                    except IndexError:
+                        logger.warn(
+                            'Tool from "%s" does not have any version.' %
+                            envfile_path
+                        )
+                        continue
 
-                        for version in versions:
-                            _tool = ecotool.Tool(
+                    if isinstance(versions, (str, unicode)):
+                        versions = [versions]
+
+                    for version in versions:
+                        try:
+                            tool_obj = ecotool.Tool(
                                 ecosystem=self,
                                 tool=_tool['tool'],
                                 version=version,
@@ -69,28 +77,30 @@ class Ecosystem(object):
                                 force_platform=self.force_platform,
                                 source=envfile_path
                             )
-                        if not _tool.valid:
-                            message = (
-                                'Skipping tool "%s": '
-                                'not supported for platform "%s"'
+                            if not tool_obj.valid:
+                                message = (
+                                    'Skipping tool "%s": '
+                                    'not supported for platform "%s"'
+                                )
+                                logger.debug(message % (
+                                    tool_obj.name, self.force_platform))
+                                continue
+
+                        except Exception as e:
+                            logger.warn(
+                                'Could not load env file "%s": %s.' % (
+                                    envfile_path, e)
                             )
-                            logger.debug(message % (
-                                _tool.name, self.force_platform))
+                            logger.debug(traceback.format_exc())
                             continue
 
-                    except Exception as e:
-                        logger.warn(
-                            'Could not load env file "%s": %s.' % (
-                                envfile_path, e)
-                        )
-                        logger.debug(traceback.format_exc())
-                        continue
+                        if self._tools.get(tool_obj.name):
+                            logger.warn(
+                                'Overriding duplicate tool "%s"' %
+                                tool_obj.name
+                            )
 
-                    if self._tools.get(_tool.name):
-                        logger.warn(
-                            'Overriding duplicate tool "%s"' % _tool.name)
-
-                    self._tools[_tool.name] = _tool
+                        self._tools[tool_obj.name] = tool_obj
 
     def get_tool(self, tool):
         _tool = self._tools.get(tool)
