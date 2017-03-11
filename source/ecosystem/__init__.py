@@ -1,5 +1,7 @@
-from .eco import Ecosystem, Environment
 import logging
+from .eco import Ecosystem, Environment
+from .errors import MissingDependencyError, MissingRequirementError
+from .errors import ToolNotFoundError, PresetNotFoundError
 
 logging.basicConfig(
     format='%(levelname)-8s - %(name)-18s:  %(message)s',

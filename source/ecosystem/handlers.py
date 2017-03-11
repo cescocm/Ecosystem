@@ -84,7 +84,9 @@ class PythonHandler(BaseFileHandler):
         module = self.read_module(file_path)
 
         if not hasattr(module, 'get_tools'):
-            logger.warn('Env file "%s" does not have "get_tools" function')
+            logger.warn(
+                'Env file "%s" does not have "get_tools" function' % file_path
+            )
             return []
 
         return module.get_tools()

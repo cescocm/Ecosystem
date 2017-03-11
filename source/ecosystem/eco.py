@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 class Ecosystem(object):
     def __init__(
             self, env_search_paths=None, plugin_searach_paths=None,
-            preset_searach_paths=None, force_platform=None):
+            preset_search_paths=None, force_platform=None):
         self.search_paths = env_search_paths or \
             os.getenv('ECO_ENV', '').split(os.pathsep)
 
@@ -22,7 +22,7 @@ class Ecosystem(object):
 
         self.filehandler = handlers.FileHandlerManager()
         self.pluginmanager = plugins.PluginManager(self, plugin_searach_paths)
-        self.presetmanager = presets.PresetManager(self, preset_searach_paths)
+        self.presetmanager = presets.PresetManager(self, preset_search_paths)
         self._tools = {}
         self.discover()
 
