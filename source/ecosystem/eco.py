@@ -53,17 +53,22 @@ class Ecosystem(object):
 
                 for _tool in tools:
                     try:
-                        _tool = ecotool.Tool(
-                            ecosystem=self,
-                            tool=_tool['tool'],
-                            version=_tool['version'],
-                            platforms=_tool.get('platforms', '*'),
-                            requires=_tool.get('requires', []),
-                            environment=_tool['environment'],
-                            optional=_tool.get('optional', {}),
-                            force_platform=self.force_platform,
-                            source=envfile_path
-                        )
+                        versions = _tool['version']
+                        if isinstance(versions, (str, unicode)):
+                            versions = [versions]
+
+                        for version in versions:
+                            _tool = ecotool.Tool(
+                                ecosystem=self,
+                                tool=_tool['tool'],
+                                version=version,
+                                platforms=_tool.get('platforms', '*'),
+                                requires=_tool.get('requires', []),
+                                environment=_tool['environment'],
+                                optional=_tool.get('optional', {}),
+                                force_platform=self.force_platform,
+                                source=envfile_path
+                            )
                         if not _tool.valid:
                             message = (
                                 'Skipping tool "%s": '
