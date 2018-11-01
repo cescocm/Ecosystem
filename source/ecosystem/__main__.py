@@ -53,7 +53,7 @@ def main(args=sys.argv[1:]):
 
         if args.preset:
             preset = eco.get_preset(args.preset)
-            preset.run(command=args.run)
+            preset.run(command=args.run + extra)
 
         elif args.tools:
             if not args.run:
@@ -62,8 +62,12 @@ def main(args=sys.argv[1:]):
             with env:
                 subprocess.call(
                     args.run + extra,
-                    shell='win' in platform.system().lower()
+                    shell='win' in platform.system().lower(),
+                    stdout=subprocess.PIPE,
+                    sterr=subprocess.PIPE,
+                    stdin=subprocess.PIPE
                 )
+            raise SystemExit(0)
 
 
 if __name__ == '__main__':

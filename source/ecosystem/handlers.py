@@ -95,7 +95,7 @@ class PythonHandler(BaseFileHandler):
         module = self.read_module(file_path)
 
         if not hasattr(module, 'get_presets'):
-            logger.warn('Env file "%s" does not have "get_tools" function')
+            logger.warn('Env file "%s" does not have "get_presets" function')
             return []
 
         return module.get_presets()

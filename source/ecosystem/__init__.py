@@ -7,3 +7,5 @@ logging.basicConfig(
     format='%(levelname)-8s - %(name)-18s:  %(message)s',
     level=logging.INFO
 )
+
+__version__ = '0.6.2'
