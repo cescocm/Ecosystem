@@ -93,5 +93,5 @@ class Variable(object):
             result = regex.findall(self.value)
             if result:
                 dependencies += [x.strip('${}%') for x in result]
-        dependencies = list(set(dependencies))
+        dependencies = list(set([x.upper() for x in dependencies]))
         return dependencies

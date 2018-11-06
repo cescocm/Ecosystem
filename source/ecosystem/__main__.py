@@ -25,6 +25,7 @@ def main(args=sys.argv[1:]):
 
     run_grp = parser.add_argument_group('run')
     run_grp.add_argument('-r', '--run', nargs='*')
+    list_subgrp.add_argument('--run-detached', action='store_true')
 
     source_subgrp = run_grp.add_mutually_exclusive_group()
     source_subgrp.add_argument('-t', '--tools', nargs='+')
@@ -51,6 +52,7 @@ def main(args=sys.argv[1:]):
             parser.error(
                 'one of te arguments -t/--tools -p/--presets is required')
 
+        func = subprocess.Popen if args.run_detached else subprocess.call
         if args.preset:
             preset = eco.get_preset(args.preset)
             preset.run(command=args.run + extra)
@@ -60,11 +62,11 @@ def main(args=sys.argv[1:]):
                 parser.error('argument -r/--run requires a value')
             env = eco.get_environment(*args.tools)
             with env:
-                subprocess.call(
+                func(
                     args.run + extra,
                     shell='win' in platform.system().lower(),
                     stdout=subprocess.PIPE,
-                    sterr=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
                     stdin=subprocess.PIPE
                 )
             raise SystemExit(0)

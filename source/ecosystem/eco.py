@@ -186,7 +186,7 @@ class Environment(object):
             for var in self.sort_by_dependency(tool.envs):
                 variables.append(var)
 
-        var_keys = [x.key for x in variables]
+        var_keys = [x.key.upper() for x in variables]
 
         for curr_var in variables:
 
