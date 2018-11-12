@@ -1,9 +1,9 @@
 import os
 import logging
 import traceback
+
 from ecosystem import errors
-import subprocess
-import platform
+from ecosystem import utils
 
 logger = logging.getLogger(__name__)
 
@@ -97,7 +97,7 @@ class Preset(object):
             self.name
         )
 
-    def run(self, command=None, blocking=True):
+    def run(self, command=None, detached=True):
         environment = self.get_environment()
         command = command or self.default_command
         if not isinstance(command, (set, list, tuple)):
@@ -111,22 +111,7 @@ class Preset(object):
         for key, val in envs.items():
             envs[str(key)] = str(val)
 
-        if blocking:
-            return subprocess.call(
-                command,
-                env=envs,
-                shell='win' in platform.system().lower()
-            )
-        else:
-            proc = subprocess.Popen(
-                command,
-                stdout=subprocess.PIPE,
-                stdin=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                env=envs,
-                shell='win' in platform.system().lower()
-            )
-            return proc
+        return utils.call_process(command, detached=detached, env=envs)
 
     def get_environment(self):
         return self.ecosystem.get_environment(*self.tools)

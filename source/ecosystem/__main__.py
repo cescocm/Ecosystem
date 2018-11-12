@@ -1,9 +1,9 @@
 import sys
 import argparse
-from ecosystem import Ecosystem
-import subprocess
-import platform
 import logging
+
+from ecosystem import Ecosystem
+from ecosystem import utils
 
 logger = logging.getLogger('ecosystem')
 levels = {
@@ -52,7 +52,6 @@ def main(args=sys.argv[1:]):
             parser.error(
                 'one of te arguments -t/--tools -p/--presets is required')
 
-        func = subprocess.Popen if args.run_detached else subprocess.call
         if args.preset:
             preset = eco.get_preset(args.preset)
             preset.run(command=args.run + extra)
@@ -60,15 +59,11 @@ def main(args=sys.argv[1:]):
         elif args.tools:
             if not args.run:
                 parser.error('argument -r/--run requires a value')
+
             env = eco.get_environment(*args.tools)
             with env:
-                func(
-                    args.run + extra,
-                    shell='win' in platform.system().lower(),
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    stdin=subprocess.PIPE
-                )
+                utils.call_process(
+                    args.run + extra, detached=args.run_detached)
             raise SystemExit(0)
 
 
