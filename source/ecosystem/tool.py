@@ -60,9 +60,12 @@ class Variable(object):
         self.tool = tool
         self.key = key
         self._raw_value = value
+        self._mode = 'append'
         if isinstance(value, dict):
-            value = value.get(self.tool.platform, '')
+            value = self._raw_value.get(self.tool.platform, '')
             value = value or self._raw_value.get('*', '')
+
+            self._mode = self._raw_value.get('mode', self._mode)
 
         if isinstance(value, (list, tuple, set)):
             value = os.pathsep.join(value)
@@ -78,6 +81,9 @@ class Variable(object):
             self.__class__.__name__,
             self.key
         )
+
+    def mode(self):
+        return self._mode
 
     def format_value(self, value):
         format_args = dict(

@@ -26,6 +26,7 @@ def main(args=sys.argv[1:]):
     run_grp = parser.add_argument_group('run')
     run_grp.add_argument('-r', '--run', nargs='*')
     run_grp.add_argument('--run-detached', action='store_true')
+    run_grp.add_argument('--normalize-paths', action='store_true')
 
     source_subgrp = run_grp.add_mutually_exclusive_group()
     source_subgrp.add_argument('-t', '--tools', nargs='+')
@@ -37,7 +38,7 @@ def main(args=sys.argv[1:]):
     args, extra = parser.parse_known_args(args)
     logger.setLevel(levels.get(args.verbosity, logging.INFO))
 
-    eco = Ecosystem()
+    eco = Ecosystem(normalize_paths=args.normalize_paths)
 
     if args.list:
         sys.stdout.write('\n'.join(eco.list_tools()))

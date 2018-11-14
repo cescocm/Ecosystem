@@ -14,7 +14,8 @@ logger = logging.getLogger(__name__)
 class Ecosystem(object):
     def __init__(
             self, env_search_paths=None, plugin_searach_paths=None,
-            preset_search_paths=None, force_platform=None):
+            preset_search_paths=None, force_platform=None,
+            normalize_paths=False):
         self.search_paths = env_search_paths or \
             os.getenv('ECO_ENV', '').split(os.pathsep)
 
@@ -23,6 +24,7 @@ class Ecosystem(object):
         self.filehandler = handlers.FileHandlerManager()
         self.pluginmanager = plugins.PluginManager(self, plugin_searach_paths)
         self.presetmanager = presets.PresetManager(self, preset_search_paths)
+        self._normalize_paths = normalize_paths
         self._tools = {}
         self.discover()
 
@@ -131,6 +133,10 @@ class Environment(object):
     def __init__(self, ecosystem, *tools):
         self.tools = tools
         self.ecosystem = ecosystem
+        self._normalize_paths = False
+
+    def setPathNormalization(self, value):
+        self._normalize_paths = value
 
     def __repr__(self):
         return '<%s.%s "%s">' % (
@@ -203,7 +209,19 @@ class Environment(object):
 
             prev = os.environ.get(curr_var.key, '')
             prev = [x for x in prev.split(os.pathsep) if x]
-            prev.append(curr_var.value)
+            if self._normalize_paths:
+                prev = [os.path.normpath(x) for x in prev]
+
+            if curr_var.mode() == 'append':
+                prev.append(curr_var.value)
+            elif curr_var.mode() == 'prepend':
+                prev.insert(0, curr_var.value)
+            elif curr_var.mode() == 'expand':
+                prev = [os.path.expandvars(curr_var.value)]
+            else:
+                raise ValueError('Variable "{}" has an unsupported mode "{}"'
+                                 .format(curr_var.key, curr_var.mode()))
+
             os.environ[str(curr_var.key)] = str(os.pathsep.join(prev))
 
         for i in range(3):
