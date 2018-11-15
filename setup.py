@@ -4,8 +4,8 @@ import imp
 from setuptools import setup, find_packages
 
 
-version_file = os.path.abspath('source/ecosystem/__init__.py')
-version_mod = imp.load_source('ecosystem', version_file)
+version_file = os.path.abspath('source/ecosystem/_version.py')
+version_mod = imp.load_source('_version', version_file)
 
 
 setup(
