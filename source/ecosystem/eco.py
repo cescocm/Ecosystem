@@ -2,6 +2,7 @@ import os
 import logging
 import traceback
 import platform
+import collections
 from ecosystem import errors
 from ecosystem import handlers
 from ecosystem import plugins
@@ -172,16 +173,25 @@ class Environment(object):
 
     def __sub__(self, other):
         if not isinstance(other, Environment):
-            raise TypeError('Can only be added to other Environment objects.')
+            raise TypeError(
+                'Can only be subtracted to other Environment objects.')
 
         return Environment(self.ecosystem, self.tools - other.tools)
 
     def __rsub__(self, other):
         if not isinstance(other, Environment):
-            raise TypeError('Can only be added to other Environment objects.')
+            raise TypeError(
+                'Can only be subtracted to other Environment objects.')
 
         self.tools -= other.tools
         return self
+
+    def remove_duplicates(self):
+        tooldict = collections.OrderedDict()
+        for tool in self.tools:
+            tooldict[tool.name] = tool
+
+        self.tools = tooldict.values()
 
     def resolve(self):
         self.check_requirements()

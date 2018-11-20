@@ -4,6 +4,7 @@ import logging
 
 from ecosystem import Ecosystem
 from ecosystem import utils
+from ecosystem import presets
 
 logger = logging.getLogger('ecosystem')
 levels = {
@@ -30,7 +31,7 @@ def main(args=sys.argv[1:]):
 
     source_subgrp = run_grp.add_mutually_exclusive_group()
     source_subgrp.add_argument('-t', '--tools', nargs='+')
-    source_subgrp.add_argument('-p', '--preset', type=str)
+    source_subgrp.add_argument('-p', '--preset', nargs='+')
 
     common_grp = parser.add_argument_group('common')
     common_grp.add_argument('--verbosity', type=str, default='info')
@@ -56,11 +57,18 @@ def main(args=sys.argv[1:]):
         command = args.run + extra
 
         if args.preset:
-            preset = eco.get_preset(args.preset)
-            environment = preset.get_environment()
+            if len(args.preset) == 1:
+                preset = eco.get_preset(args.preset[0])
+                environment = preset.get_environment()
+            else:
+                environment = presets.merge(*[eco.get_preset(x)
+                                              for x in args.preset])
+                environment.remove_duplicates()
 
             if not command:
                 command = preset.default_command
+                if not command:
+                    raise ValueError('Preset does not have a default command')
 
         elif args.tools:
             if not args.run:

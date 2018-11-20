@@ -1,6 +1,7 @@
 import os
 import logging
 import traceback
+import collections
 
 from ecosystem import errors
 from ecosystem import utils
@@ -48,7 +49,7 @@ class PresetManager(object):
                         preset_object = {
                             'name': preset['name'],
                             'tools': preset['tools'],
-                            'default_command': preset['default_command']
+                            'default_command': preset.get('default_command')
                         }
                     except (IndexError, KeyError) as e:
                         logger.warn(
@@ -76,7 +77,7 @@ class PresetManager(object):
             ecosystem=self.ecosystem,
             name=preset['name'],
             tools=preset['tools'],
-            default_command=preset['default_command']
+            default_command=preset.get('default_command')
         )
 
     def list_presets(self):
@@ -100,6 +101,10 @@ class Preset(object):
     def run(self, command=None, detached=True):
         environment = self.get_environment()
         command = command or self.default_command
+
+        if not command:
+            raise ValueError('No command specified')
+
         if not isinstance(command, (set, list, tuple)):
             command = [command]
 
@@ -115,3 +120,20 @@ class Preset(object):
 
     def get_environment(self):
         return self.ecosystem.get_environment(*self.tools)
+
+
+def merge(*presets):
+    environment = None
+    ecosystems = []
+    for preset in presets:
+        ecosystems.append(preset.ecosystem)
+        if not environment:
+            environment = preset.get_environment()
+        else:
+            environment += preset.get_environment()
+
+    if len(list(set(ecosystems))) != 1:
+        raise RuntimeError(
+            'Presets do not come from the same Ecosystems instance')
+
+    return environment
