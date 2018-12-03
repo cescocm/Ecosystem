@@ -1,7 +1,6 @@
 import os
 import logging
 import traceback
-import collections
 
 from ecosystem import errors
 from ecosystem import utils
@@ -17,6 +16,7 @@ class PresetManager(object):
         self.ecosystem = ecosystem
         self._presets = {}
         self.discover()
+        self.expand_presets()
 
     def discover(self):
         for path in self.search_paths:
@@ -57,6 +57,7 @@ class PresetManager(object):
                         )
                         logger.debug(traceback.format_exc())
                         continue
+
                     if preset_object['name'] in self._presets:
                         logger.warn(
                             'Overriding preset "%s" with file "%s"' % (
@@ -64,7 +65,52 @@ class PresetManager(object):
                             )
                         )
 
-                    self._presets[preset_object['name']] = preset_object
+                    _preset = Preset(self.ecosystem, **preset_object)
+                    self._presets[preset_object['name']] = _preset
+
+    def expand_presets(self):
+        sorted_presets = []
+
+        for preset in self._presets.values():
+            index = 0
+            dependencies = preset.subpresets()
+            for i, _preset in reversed(list(enumerate(sorted_presets))):
+                if _preset.name in dependencies:
+                    index = i + 1
+
+            sorted_presets.insert(index, preset)
+
+        for preset in sorted_presets:
+            for dep in preset.subpresets():
+                dep_preset = self._presets.get(dep)
+
+                if not dep_preset:
+                    logger.warn('Could not find dependency preset "{}" for '
+                                'preset "{}"'.format(dep, preset.name))
+                    continue
+
+                idx = preset.subpreset_index(dep)
+                if not idx:
+                    logger.warn('Dependency "{}" of preset "{}" is not of '
+                                'format "preset:presetName"'
+                                .format(dep, preset.name))
+                    continue
+
+                preset_tools = [self.ecosystem.get_tool(x).tool
+                                for x in preset.tools
+                                if not x.startswith('preset:')]
+
+                preset.tools.pop(idx)
+                for tool in reversed(dep_preset.tools):
+                    toolobj = self.ecosystem.get_tool(tool)
+                    if toolobj.tool in preset_tools:
+                        logger.warning(
+                            'Duplicate tool "{}" found in preset {} while '
+                            'expanding it. Keeping first tool found.'
+                            .format(toolobj.tool, preset.name))
+                        continue
+
+                    preset.tools.insert(idx, tool)
 
     def get_preset(self, name):
         preset = self._presets.get(name)
@@ -73,12 +119,7 @@ class PresetManager(object):
                 'Preset "%s" does not exist.' % name
             )
 
-        return Preset(
-            ecosystem=self.ecosystem,
-            name=preset['name'],
-            tools=preset['tools'],
-            default_command=preset.get('default_command')
-        )
+        return preset
 
     def list_presets(self):
         return sorted(self._presets.keys())
@@ -97,6 +138,19 @@ class Preset(object):
             self.__class__.__name__,
             self.name
         )
+
+    def subpreset_index(self, preset):
+        for i, tool in enumerate(self.tools):
+            if tool.startswith('preset:{}'.format(preset)):
+                return i
+
+    def subpresets(self):
+        subp = []
+        for tool in self.tools:
+            if tool.startswith('preset:'):
+                subp.append(tool.split(':')[-1])
+
+        return subp
 
     def run(self, command=None, detached=True):
         environment = self.get_environment()

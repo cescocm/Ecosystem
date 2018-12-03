@@ -28,6 +28,7 @@ def main(args=sys.argv[1:]):
     run_grp.add_argument('-r', '--run', nargs='*')
     run_grp.add_argument('--run-detached', action='store_true')
     run_grp.add_argument('--normalize-paths', action='store_true')
+    run_grp.add_argument('--from-previous', action='store_true')
 
     source_subgrp = run_grp.add_mutually_exclusive_group()
     source_subgrp.add_argument('-t', '--tools', nargs='+')
@@ -76,8 +77,15 @@ def main(args=sys.argv[1:]):
 
             environment = eco.get_environment(*args.tools)
 
+        kwargs = {}
+        if args.from_previous:
+            env = utils.retrieve_environment()
+            kwargs['env'] = env
+
         with environment:
-            code = utils.call_process(command, detached=args.run_detached)
+            code = utils.call_process(command,
+                                      detached=args.run_detached,
+                                      **kwargs)
 
         raise SystemExit(code)
 

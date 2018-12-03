@@ -3,6 +3,9 @@ import logging
 import traceback
 import platform
 import collections
+import json
+import tempfile
+
 from ecosystem import errors
 from ecosystem import handlers
 from ecosystem import plugins
@@ -22,12 +25,12 @@ class Ecosystem(object):
 
         self.force_platform = force_platform or platform.system().lower()
 
+        self._tools = {}
         self.filehandler = handlers.FileHandlerManager()
+        self.discover()
         self.pluginmanager = plugins.PluginManager(self, plugin_searach_paths)
         self.presetmanager = presets.PresetManager(self, preset_search_paths)
         self._normalize_paths = normalize_paths
-        self._tools = {}
-        self.discover()
 
     def discover(self):
         for path in self.search_paths:
@@ -193,7 +196,14 @@ class Environment(object):
 
         self.tools = tooldict.values()
 
-    def resolve(self):
+    def _serializable_environ(self):
+        environ = {}
+
+        for key, val in os.environ.items():
+            environ[str(key)] = str(val)
+        return environ
+
+    def resolve(self, store_previous=True):
         self.check_requirements()
 
         variables = []
@@ -203,6 +213,15 @@ class Environment(object):
                 variables.append(var)
 
         var_keys = [x.key.upper() for x in variables]
+
+        if store_previous:
+            destination = tempfile.NamedTemporaryFile(suffix='.json',
+                                                      prefix='ecosystem.dump.',
+                                                      delete=False)
+            with open(destination.name, 'w') as f:
+                json.dump(self._serializable_environ(), f, indent=4)
+
+            os.environ['ECO_PREVIOUS_ENV'] = destination.name
 
         for curr_var in variables:
 
