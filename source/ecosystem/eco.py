@@ -165,7 +165,8 @@ class Environment(object):
         if not isinstance(other, Environment):
             raise TypeError('Can only be added to other Environment objects.')
 
-        return Environment(self.ecosystem, self.tools + other.tools)
+        tools = self.tools + other.tools
+        return Environment(self.ecosystem, *tools)
 
     def __radd__(self, other):
         if not isinstance(other, Environment):
@@ -179,20 +180,29 @@ class Environment(object):
             raise TypeError(
                 'Can only be subtracted to other Environment objects.')
 
-        return Environment(self.ecosystem, self.tools - other.tools)
+        tools = [x for x in self.tools if x not in other.tools]
+        return Environment(self.ecosystem, *tools)
 
     def __rsub__(self, other):
         if not isinstance(other, Environment):
             raise TypeError(
                 'Can only be subtracted to other Environment objects.')
 
-        self.tools -= other.tools
+        self.tools = [x for x in self.tools if x not in other.tools]
         return self
 
     def remove_duplicates(self):
         tooldict = collections.OrderedDict()
         for tool in self.tools:
-            tooldict[tool.name] = tool
+            if tool.tool in tooldict:
+                logger.debug(
+                    ('Duplicate tool "{}" found in preset "{}". '
+                     'Using exiting tool "{}"'
+                     ).format(tool.tool, self.name, tooldict[tool.tool].name)
+                )
+                continue
+
+            tooldict[tool.tool] = tool
 
         self.tools = tooldict.values()
 

@@ -76,7 +76,7 @@ class PresetManager(object):
             dependencies = preset.subpresets()
             for i, _preset in reversed(list(enumerate(sorted_presets))):
                 if _preset.name in dependencies:
-                    index = i + 1
+                    index = max(sorted_presets.index(_preset) + 1, index)
 
             sorted_presets.insert(index, preset)
 
@@ -96,20 +96,8 @@ class PresetManager(object):
                                 .format(dep, preset.name))
                     continue
 
-                preset_tools = [self.ecosystem.get_tool(x).tool
-                                for x in preset.tools
-                                if not x.startswith('preset:')]
-
                 preset.tools.pop(idx)
                 for tool in reversed(dep_preset.tools):
-                    toolobj = self.ecosystem.get_tool(tool)
-                    if toolobj.tool in preset_tools:
-                        logger.warning(
-                            'Duplicate tool "{}" found in preset {} while '
-                            'expanding it. Keeping first tool found.'
-                            .format(toolobj.tool, preset.name))
-                        continue
-
                     preset.tools.insert(idx, tool)
 
     def get_preset(self, name):
@@ -173,7 +161,9 @@ class Preset(object):
         return utils.call_process(command, detached=detached, env=envs)
 
     def get_environment(self):
-        return self.ecosystem.get_environment(*self.tools)
+        env = self.ecosystem.get_environment(*self.tools)
+        env.remove_duplicates()
+        return env
 
 
 def merge(*presets):
