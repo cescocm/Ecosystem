@@ -196,9 +196,9 @@ class Environment(object):
         for tool in self.tools:
             if tool.tool in tooldict:
                 logger.debug(
-                    ('Duplicate tool "{}" found in preset "{}". '
+                    ('Duplicate tool "{}" found environment. '
                      'Using exiting tool "{}"'
-                     ).format(tool.tool, self.name, tooldict[tool.tool].name)
+                     ).format(tool.tool, tooldict[tool.tool].name)
                 )
                 continue
 
