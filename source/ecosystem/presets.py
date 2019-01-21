@@ -90,7 +90,7 @@ class PresetManager(object):
                     continue
 
                 idx = preset.subpreset_index(dep)
-                if not idx:
+                if idx is None:
                     logger.warn('Dependency "{}" of preset "{}" is not of '
                                 'format "preset:presetName"'
                                 .format(dep, preset.name))
