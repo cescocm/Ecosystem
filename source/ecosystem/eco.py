@@ -124,7 +124,12 @@ class Ecosystem(object):
     def get_environment(self, *tools):
         _tools = []
         for tool in tools:
-            _tools.append(self.get_tool(tool))
+            if tool.startswith('preset:'):
+                preset = self.get_preset(tool.replace('preset:', ''))
+                for ptool in preset.tools:
+                    _tools.append(self.get_tool(ptool))
+            else:
+                _tools.append(self.get_tool(tool))
 
         env = Environment(self, *_tools)
         return env

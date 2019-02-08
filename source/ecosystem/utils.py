@@ -21,7 +21,7 @@ def retrieve_environment():
     return {str(x): str(y) for x, y in data.items()}
 
 
-def call_process(command, detached=False, shell=None, **kwargs):
+def call_process(command, detached=False, **kwargs):
 
     kwargs.update({'args': command})
 

@@ -1,3 +1,4 @@
+import os
 import sys
 import argparse
 import logging
@@ -77,15 +78,19 @@ def main(args=sys.argv[1:]):
 
             environment = eco.get_environment(*args.tools)
 
-        kwargs = {}
+        prev_env = None
         if args.from_previous:
             env = utils.retrieve_environment()
-            kwargs['env'] = env
+            prev_env = os.environment
+            os.environ = env
 
         with environment:
             code = utils.call_process(command,
                                       detached=args.run_detached,
-                                      **kwargs)
+                                      shell=True)
+
+        if prev_env:
+            os.environ = prev_env
 
         raise SystemExit(code)
 
