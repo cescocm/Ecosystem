@@ -32,7 +32,10 @@ class Ecosystem(object):
         self.presetmanager = presets.PresetManager(self, preset_search_paths)
         self._normalize_paths = normalize_paths
 
-    def discover(self):
+    def discover(self, append=False):
+        if not append:
+            self._tools = {}
+
         for path in self.search_paths:
 
             if not os.path.isdir(path):
@@ -101,7 +104,7 @@ class Ecosystem(object):
                             continue
 
                         if self._tools.get(tool_obj.name):
-                            logger.warn(
+                            logger.debug(
                                 'Overriding duplicate tool "%s"' %
                                 tool_obj.name
                             )
