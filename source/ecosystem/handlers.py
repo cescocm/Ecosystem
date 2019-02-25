@@ -46,7 +46,7 @@ class EnvFileHandler(BaseFileHandler):
     extensions = ['.env']
 
     def read_env(self, path):
-        with file(path, 'r') as f:
+        with open(path, 'r') as f:
             return [eval(f.read())]
 
     def read_preset(self, file_path):

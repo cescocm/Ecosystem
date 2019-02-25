@@ -14,6 +14,11 @@ from ecosystem import presets
 
 logger = logging.getLogger(__name__)
 
+try:
+    basestring
+except NameError:
+    basestring = str
+
 
 class Ecosystem(object):
     def __init__(
@@ -70,7 +75,7 @@ class Ecosystem(object):
                         )
                         continue
 
-                    if isinstance(versions, (str, unicode)):
+                    if isinstance(versions, basestring):
                         versions = [versions]
 
                     for version in versions:
@@ -206,7 +211,7 @@ class Environment(object):
                 logger.debug(
                     ('Duplicate tool "{}" found environment. '
                      'Using exiting tool "{}"'
-                     ).format(tool.tool, tooldict[tool.tool].name)
+                     ).format(tool.name, tooldict[tool.tool].name)
                 )
                 continue
 
@@ -244,7 +249,7 @@ class Environment(object):
         for curr_var in variables:
 
             for dependency in curr_var.get_dependencies():
-                if dependency not in var_keys + os.environ.keys():
+                if dependency not in var_keys + list(os.environ.keys()):
                     raise errors.MissingDependencyError(
                         'Variable "%s" of tool "%s" cannot be resolved: '
                         'Environment "%s" is missing' % (
@@ -272,7 +277,7 @@ class Environment(object):
             os.environ[str(curr_var.key)] = str(os.pathsep.join(prev))
 
         for i in range(3):
-            for env_name, env_value in os.environ.iteritems():
+            for env_name, env_value in os.environ.items():
                 os.environ[env_name] = os.path.expandvars(env_value)
 
         environ = dict()
