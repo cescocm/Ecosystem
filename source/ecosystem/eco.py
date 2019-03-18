@@ -280,6 +280,9 @@ class Environment(object):
             for env_name, env_value in os.environ.items():
                 os.environ[env_name] = os.path.expandvars(env_value)
 
+        tools = os.pathsep.join([x.name for x in self.tools])
+        os.environ['ECO_SESSION_TOOLS'] = str(tools)
+
         environ = dict()
         environ.update(os.environ)
         return environ
