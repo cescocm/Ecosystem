@@ -16,6 +16,19 @@ levels = {
 
 
 def main(args=sys.argv[1:]):
+
+    # Pre-parse
+    runcmd = []
+    if ('-r' in args or '--run' in args):
+        index = args.index('-r') if '-r' in args else args.index('--run')
+        runcmd += [args.pop(x) for x in reversed(range(index, len(args)))]
+        runcmd = list(reversed(runcmd))[1:]
+
+    extra = []
+    if ('-h' in args or '--help' in args) and len(args != 1):
+        index = args.index('-h') if '-h' in args else args.index('--help')
+        extra.append(args.pop(index))
+
     parser = argparse.ArgumentParser(prog='ecosystem')
 
     list_grp = parser.add_argument_group('list')
@@ -26,7 +39,7 @@ def main(args=sys.argv[1:]):
         '-L', '--list-presets', action='store_true', default=False)
 
     run_grp = parser.add_argument_group('run')
-    run_grp.add_argument('-r', '--run', nargs='*')
+    run_grp.add_argument('-r', '--run', nargs='?', default=[''])
     run_grp.add_argument('--run-detached', action='store_true')
     run_grp.add_argument('--normalize-paths', action='store_true')
     run_grp.add_argument('--from-previous', action='store_true')
@@ -38,7 +51,8 @@ def main(args=sys.argv[1:]):
     common_grp = parser.add_argument_group('common')
     common_grp.add_argument('--verbosity', type=str, default='info')
 
-    args, extra = parser.parse_known_args(args)
+    args, extra_ = parser.parse_known_args(args)
+    extra += extra_
     logger.setLevel(levels.get(args.verbosity, logging.INFO))
 
     eco = Ecosystem(normalize_paths=args.normalize_paths)
@@ -51,12 +65,10 @@ def main(args=sys.argv[1:]):
         sys.stdout.write('\n'.join(eco.list_presets()))
         return
 
-    if args.run is not None:
+    if runcmd is not None:
         if not args.preset and not args.tools:
             parser.error(
                 'one of te arguments -t/--tools -p/--presets is required')
-
-        command = args.run + extra
 
         if args.preset:
             if len(args.preset) == 1:
@@ -67,10 +79,10 @@ def main(args=sys.argv[1:]):
                                               for x in args.preset])
                 environment.remove_duplicates()
 
-            if not command:
-                command = preset.default_command
-                if not command:
-                    raise ValueError('Preset does not have a default command')
+            if not runcmd:
+                runcmd = preset.default_command
+                if not runcmd:
+                    raise ValueError('Preset does not have a default runcmd')
 
         elif args.tools:
             if not args.run:
@@ -85,7 +97,7 @@ def main(args=sys.argv[1:]):
             os.environ = env
 
         with environment:
-            code = utils.call_process(command,
+            code = utils.call_process(runcmd,
                                       detached=args.run_detached,
                                       shell=True)
 
