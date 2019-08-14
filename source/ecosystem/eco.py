@@ -68,7 +68,7 @@ class Ecosystem(object):
                 for _tool in tools:
                     try:
                         versions = _tool['version']
-                    except IndexError:
+                    except KeyError:
                         logger.warn(
                             'Tool from "%s" does not have any version.' %
                             envfile_path
