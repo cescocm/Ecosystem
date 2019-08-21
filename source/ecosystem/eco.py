@@ -282,6 +282,11 @@ class Environment(object):
 
         tools = ','.join([x.name for x in self.tools])
         os.environ['ECO_SESSION_TOOLS'] = str(tools)
+        os.environ['ECO_ENV'] = os.pathsep.join(self.ecosystem.search_paths)
+        os.environ['ECO_PRESET_PATH'] = os.pathsep.join(
+            self.ecosystem.presetmanager.search_paths)
+        os.environ['ECO_PLUGIN_PATH'] = os.pathsep.join(
+            self.ecosystem.pluginmanager.search_paths)
 
         environ = dict()
         environ.update(os.environ)

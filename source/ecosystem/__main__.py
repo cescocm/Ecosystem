@@ -2,6 +2,7 @@ import os
 import sys
 import argparse
 import logging
+import platform
 
 from ecosystem import Ecosystem
 from ecosystem import utils
@@ -15,6 +16,15 @@ levels = {
 }
 
 
+def str2bool(v):
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
+
+
 def main(args=sys.argv[1:]):
 
     # Pre-parse
@@ -25,7 +35,7 @@ def main(args=sys.argv[1:]):
         runcmd = list(reversed(runcmd))[1:]
 
     extra = []
-    if ('-h' in args or '--help' in args) and len(args != 1):
+    if ('-h' in args or '--help' in args) and len(args) != 1:
         index = args.index('-h') if '-h' in args else args.index('--help')
         extra.append(args.pop(index))
 
@@ -41,6 +51,8 @@ def main(args=sys.argv[1:]):
     run_grp = parser.add_argument_group('run')
     run_grp.add_argument('-r', '--run', nargs='?', default=[''])
     run_grp.add_argument('--run-detached', action='store_true')
+    run_grp.add_argument('--run-shell', type=str2bool,
+                         default=platform.system() == 'Windows')
     run_grp.add_argument('--normalize-paths', action='store_true')
     run_grp.add_argument('--from-previous', action='store_true')
 
@@ -99,7 +111,7 @@ def main(args=sys.argv[1:]):
         with environment:
             code = utils.call_process(runcmd,
                                       detached=args.run_detached,
-                                      shell=True)
+                                      shell=args.run_shell)
 
         if prev_env:
             os.environ = prev_env
