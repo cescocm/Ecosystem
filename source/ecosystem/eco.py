@@ -270,6 +270,8 @@ class Environment(object):
                 prev.insert(0, curr_var.value)
             elif curr_var.mode() == 'expand':
                 prev = [os.path.expandvars(curr_var.value)]
+            elif curr_var.mode() == 'default':
+                prev = [os.environ.get(curr_var.key, curr_var.value)]
             else:
                 raise ValueError('Variable "{}" has an unsupported mode "{}"'
                                  .format(curr_var.key, curr_var.mode()))
