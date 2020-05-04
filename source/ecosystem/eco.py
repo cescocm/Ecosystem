@@ -21,10 +21,11 @@ except NameError:
 
 
 class Ecosystem(object):
-    def __init__(
-            self, env_search_paths=None, plugin_searach_paths=None,
-            preset_search_paths=None, force_platform=None,
-            normalize_paths=False):
+    """Define the whole ecosystem"""
+
+    def __init__(self, env_search_paths=None, plugin_search_paths=None,
+                 preset_search_paths=None, force_platform=None,
+                 normalize_paths=False):
         self.search_paths = env_search_paths or \
             os.getenv('ECO_ENV', '').split(os.pathsep)
 
@@ -33,7 +34,7 @@ class Ecosystem(object):
         self._tools = {}
         self.filehandler = handlers.FileHandlerManager()
         self.discover()
-        self.pluginmanager = plugins.PluginManager(self, plugin_searach_paths)
+        self.pluginmanager = plugins.PluginManager(self, plugin_search_paths)
         self.presetmanager = presets.PresetManager(self, preset_search_paths)
         self._normalize_paths = normalize_paths
 
@@ -147,6 +148,8 @@ class Ecosystem(object):
 
 
 class Environment(object):
+    """Once initialized this will represent the environment defined by the wanted tools"""
+
     def __init__(self, ecosystem, *tools):
         self.tools = tools
         self.ecosystem = ecosystem

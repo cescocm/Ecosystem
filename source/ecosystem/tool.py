@@ -1,11 +1,16 @@
+import logging
 import re
 import os
 
 
+logger = logging.getLogger(__name__)
+
+
 class Tool(object):
-    def __init__(
-            self, ecosystem, tool, version, platforms, requires, environment,
-            optional, source, force_platform=None):
+    """Define a tool - specifically, a version of a tool"""
+
+    def __init__(self, ecosystem, tool, version, platforms, requires, environment,
+                 optional, source, force_platform=None):
         self.tool = tool
         self.version = version
         self.platforms = platforms
@@ -26,14 +31,14 @@ class Tool(object):
                 )
             )
 
-        for requirement, env in optional.items():
-            for key, val in env.items():
+        for optional_requirement, env in optional.items():
+            for key, value in env.items():
                 self.envs.append(
                     Variable(
                         tool=self,
                         key=key,
                         value=value,
-                        requires=requirement
+                        requires=optional_requirement
                     )
                 )
 
@@ -50,6 +55,8 @@ class Tool(object):
 
 
 class Variable(object):
+    """Define a variable required by a tool"""
+
     dependency_regexes = [
         re.compile(r"\${\w+}"),
         re.compile(r"\$\w+"),
