@@ -7,21 +7,24 @@ logger = logging.getLogger(__name__)
 
 
 class Tool(object):
-    """Define a tool - specifically, a version of a tool"""
+    '''Define a tool - specifically, a version of a tool'''
 
     def __init__(self, ecosystem, tool, version, platforms, requires, environment,
-                 optional, source, force_platform=None):
+                 optional, source, wanted_tools, force_platform=None):
         self.tool = tool
         self.version = version
         self.platforms = platforms
         self.requires = requires
+        self.optional = optional
         self.platform = force_platform
         self.source = source
+        self.wanted_tools = wanted_tools
         self.valid = self.platform in self.platforms or \
             not self.platforms or \
             '*' in self.platforms
 
         self.envs = []
+        # Add all key/values from environment section of json to envs
         for key, value in environment.items():
             self.envs.append(
                 Variable(
@@ -30,17 +33,18 @@ class Tool(object):
                     value=value
                 )
             )
-
+        # Add filtered key/values from optionals section of json to envs
         for optional_requirement, env in optional.items():
-            for key, value in env.items():
-                self.envs.append(
-                    Variable(
-                        tool=self,
-                        key=key,
-                        value=value,
-                        requires=optional_requirement
+            if optional_requirement in str(self.wanted_tools):
+                for key, value in env.items():
+                    self.envs.append(
+                        Variable(
+                            tool=self,
+                            key=key,
+                            value=value,
+                            requires=optional_requirement
+                        )
                     )
-                )
 
     def __repr__(self):
         return '<%s.%s "%s%s">' % (
@@ -55,7 +59,7 @@ class Tool(object):
 
 
 class Variable(object):
-    """Define a variable required by a tool"""
+    '''Define a variable required by a tool'''
 
     dependency_regexes = [
         re.compile(r"\${\w+}"),

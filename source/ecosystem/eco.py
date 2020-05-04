@@ -21,9 +21,9 @@ except NameError:
 
 
 class Ecosystem(object):
-    """Define the whole ecosystem"""
+    '''Define the whole ecosystem'''
 
-    def __init__(self, env_search_paths=None, plugin_search_paths=None,
+    def __init__(self, *wanted_tools, env_search_paths=None, plugin_search_paths=None,
                  preset_search_paths=None, force_platform=None,
                  normalize_paths=False):
         self.search_paths = env_search_paths or \
@@ -32,6 +32,7 @@ class Ecosystem(object):
         self.force_platform = force_platform or platform.system().lower()
 
         self._tools = {}
+        self._wanted_tools = wanted_tools
         self.filehandler = handlers.FileHandlerManager()
         self.discover()
         self.pluginmanager = plugins.PluginManager(self, plugin_search_paths)
@@ -90,7 +91,8 @@ class Ecosystem(object):
                                 environment=_tool['environment'],
                                 optional=_tool.get('optional', {}),
                                 force_platform=self.force_platform,
-                                source=envfile_path
+                                source=envfile_path,
+                                wanted_tools=self._wanted_tools
                             )
                             if not tool_obj.valid:
                                 message = (
@@ -148,9 +150,10 @@ class Ecosystem(object):
 
 
 class Environment(object):
-    """Once initialized this will represent the environment defined by the wanted tools"""
+    '''Once initialized this will represent the environment defined by the wanted tools'''
 
     def __init__(self, ecosystem, *tools):
+
         self.tools = tools
         self.ecosystem = ecosystem
         self._normalize_paths = False
